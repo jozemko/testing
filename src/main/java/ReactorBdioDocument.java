@@ -59,5 +59,17 @@ public class ReactorBdioDocument extends BdioDocument {
                 .flux();
     }
 
+    @Override
+    public Flux<Map<String, Object>> frame(Object frame) {
+        return identity().compose(inputs -> inputs.flatMap(input -> {
+            try {
+                // TODO The RxJava implementation has multiple workarounds, why are they not here?
+                return Flux.just(JsonLdProcessor.frame(input, frame, options));
+            } catch (JsonLdError e) {
+                return Flux.error(e);
+            }
+        }));
+    }
+
 }
 
