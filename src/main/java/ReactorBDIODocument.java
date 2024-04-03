@@ -37,6 +37,17 @@ public class ReactorBdioDocument extends BdioDocument {
     }
 
     @Override
+    public Flux<Object> read(InputStream in) {
+        return Flux.generate(
+                () -> EmitterFactory.newEmitter(context(), in),
+                (parser, emitter) -> {
+                    parser.emit(emitter::next, emitter::error, emitter::complete);
+                    return parser;
+                },
+                Emitter::dispose);
+    }
+
+    @Override
     public Subscriber<Object> write(BdioMetadata metadata, StreamSupplier entryStreams) {
         EmitterProcessor<Object> data = EmitterProcessor.create();
 
