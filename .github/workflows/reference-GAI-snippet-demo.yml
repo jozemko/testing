@@ -91,7 +91,7 @@ jobs:
               # Use GitHub API to create a review comment on the PR
               curl -s \
                    -X POST \
-                   -H "Authorization: token $GITHUB_TOKEN" \
+                   -H "Authorization: token ${{ secrets.WORKFLOW_GIT_ACCESS_TOKEN }}" \
                    -H "Accept: application/vnd.github.v3+json" \
                    -d "$JSON_PAYLOAD" \
                    $API_URL
