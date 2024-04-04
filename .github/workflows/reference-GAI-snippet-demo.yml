@@ -23,10 +23,7 @@ jobs:
       - name: Get list of changed files 
         run: |
           URL="https://api.github.com/repos/${GITHUB_REPOSITORY}/pulls/${{ github.event.pull_request.number }}/files"
-          echo "Requesting URL: $URL"
-          RESPONSE=$(curl -s -X GET -G -H "Authorization: token ${{ secrets.WORKFLOW_GIT_ACCESS_TOKEN }}" $URL)
-          echo "API Response: $RESPONSE"
-          FILES=$(echo "$RESPONSE" | jq -r '.[] | .filename' | tr '\n' ' ')
+          FILES=$(curl -s -X GET -G $URL | jq -r '.[] | .filename' | tr '\n' ' ')
           echo "FILES=${FILES}" >> $GITHUB_ENV
         
       - name: Query for snippet matches
@@ -56,37 +53,3 @@ jobs:
           git add .
           git diff --staged --quiet || git commit -m "Adding license findings via GitHub Actions"
           git push || echo "No Changes to commit"
-      - name: Comment on PR with snippet analysis results for multiple matches
-        env:
-          GITHUB_TOKEN: ${{ secrets.WORKFLOW_GIT_ACCESS_TOKEN }} # Using the built-in GITHUB_TOKEN for authentication
-        run: |
-          PR_NUMBER=${{ github.event.pull_request.number }}
-          HEAD_SHA="${{ github.event.pull_request.head.sha }}"
-          GITHUB_REPO="${GITHUB_REPOSITORY}"
-          API_URL_ROOT="https://api.github.com/repos/$GITHUB_REPO/pulls/$PR_NUMBER/reviews"
-      
-          # Loop through the JSON files with snippet analysis results
-          for jsonfile in .snippet-licenses/*.json; do
-            # Start a review
-            REVIEW_ID=$(curl -s -X POST -H "Authorization: token $GITHUB_TOKEN" -H "Accept: application/vnd.github.v3+json" -d "{\"commit_id\": \"$HEAD_SHA\", \"event\": \"COMMENT\"}" $API_URL_ROOT | jq '.id')
-      
-            # Extract data for each PERMISSIVE license match and post a comment
-            jq -c '.snippetMatches.PERMISSIVE[]' $jsonfile | while read -r match; do
-              FILE_PATH=$(echo $match | jq -r '.matchedFilePath')
-              START_LINE=$(echo $match | jq -r '.regions.sourceStartLines[0]')
-              END_LINE=$(echo $match | jq -r '.regions.sourceEndLines[0]')
-              LICENSE_NAME=$(echo $match | jq -r '.licenseDefinition.name')
-              COMMENT_BODY="Detected $LICENSE_NAME license in this snippet. Please review if this is correct."
-      
-              # For each match, create a comment in the review
-              curl -s -X POST -H "Authorization: token $GITHUB_TOKEN" -H "Accept: application/vnd.github.v3+json" \
-                   -d "{\"body\": \"$COMMENT_BODY\", \"path\": \"$FILE_PATH\", \"position\": $START_LINE, \"side\": \"RIGHT\"}" \
-                   "${API_URL_ROOT}/$REVIEW_ID/comments"
-            done
-      
-            # Submit the review to publish all comments at once
-            curl -s -X POST -H "Authorization: token $GITHUB_TOKEN" -H "Accept: application/vnd.github.v3+json" \
-                 -d "{\"event\": \"COMMENT\"}" "${API_URL_ROOT}/$REVIEW_ID/events"
-          done
-
-      
