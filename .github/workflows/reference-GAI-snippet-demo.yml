@@ -23,7 +23,10 @@ jobs:
       - name: Get list of changed files 
         run: |
           URL="https://api.github.com/repos/${GITHUB_REPOSITORY}/pulls/${{ github.event.pull_request.number }}/files"
-          FILES=$(curl -s -X GET -G $URL | jq -r '.[] | .filename' | tr '\n' ' ')
+          echo "Requesting URL: $URL"
+          RESPONSE=$(curl -s -X GET -G -H "Authorization: token ${{ secrets.WORKFLOW_GIT_ACCESS_TOKEN }}" $URL)
+          echo "API Response: $RESPONSE"
+          FILES=$(echo "$RESPONSE" | jq -r '.[] | .filename' | tr '\n' ' ')
           echo "FILES=${FILES}" >> $GITHUB_ENV
         
       - name: Query for snippet matches
