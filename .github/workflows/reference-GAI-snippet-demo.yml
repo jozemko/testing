@@ -56,45 +56,37 @@ jobs:
           git add .
           git diff --staged --quiet || git commit -m "Adding license findings via GitHub Actions"
           git push || echo "No Changes to commit"
-
       - name: Comment on PR with snippet analysis results for multiple matches
         env:
-          GITHUB_TOKEN: ${{ secrets.WORKFLOW_GIT_ACCESS_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.WORKFLOW_GIT_ACCESS_TOKEN }} # Using the built-in GITHUB_TOKEN for authentication
         run: |
           PR_NUMBER=${{ github.event.pull_request.number }}
-          API_URL="https://api.github.com/repos/${GITHUB_REPOSITORY}/pulls/$PR_NUMBER/comments"
-          COMMIT_ID="${{ github.event.pull_request.head.sha }}"
-          
+          HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+          GITHUB_REPO="${GITHUB_REPOSITORY}"
+          API_URL_ROOT="https://api.github.com/repos/$GITHUB_REPO/pulls/$PR_NUMBER/reviews"
+      
+          # Loop through the JSON files with snippet analysis results
           for jsonfile in .snippet-licenses/*.json; do
-            # Get the total number of matches (assuming PERMISSIVE licensing; adjust as needed)
-            TOTAL_MATCHES=$(jq '[.snippetMatches.PERMISSIVE[]] | length' "$jsonfile")
-            for ((i=0; i<TOTAL_MATCHES; i++)); do
-              # Extract relevant information for each match
-              PROJECT_NAME=$(jq -r ".snippetMatches.PERMISSIVE[$i].projectName" "$jsonfile")
-              FILE_PATH=$(jq -r ".snippetMatches.PERMISSIVE[$i].matchedFilePath" "$jsonfile")
-              START_LINE=$(jq -r ".snippetMatches.PERMISSIVE[$i].regions.sourceStartLines[0]" "$jsonfile")
-              END_LINE=$(jq -r ".snippetMatches.PERMISSIVE[$i].regions.sourceEndLines[0]" "$jsonfile")
-              LICENSE_NAME=$(jq -r ".snippetMatches.PERMISSIVE[$i].licenseDefinition.name" "$jsonfile")
-              
-              # Construct the comment text
-              COMMENT_BODY="Detected license: $LICENSE_NAME in project: $PROJECT_NAME. File: $FILE_PATH, Lines: $START_LINE-$END_LINE."
-              
-              # JSON payload for GitHub API
-              JSON_PAYLOAD=$(jq -n \
-                --arg body "$COMMENT_BODY" \
-                --arg commit_id "$COMMIT_ID" \
-                --arg path "$FILE_PATH" \
-                --arg start_line "$START_LINE" \
-                --arg line "$END_LINE" \
-                '{body: $body, commit_id: $commit_id, path: $path, start_line: $start_line | tonumber, line: $line | tonumber}')
-              
-              # Use GitHub API to create a review comment on the PR
-              curl -s \
-                   -X POST \
-                   -H "Authorization: token ${{ secrets.WORKFLOW_GIT_ACCESS_TOKEN }}" \
-                   -H "Accept: application/vnd.github.v3+json" \
-                   -d "$JSON_PAYLOAD" \
-                   $API_URL
+            # Start a review
+            REVIEW_ID=$(curl -s -X POST -H "Authorization: token $GITHUB_TOKEN" -H "Accept: application/vnd.github.v3+json" -d "{\"commit_id\": \"$HEAD_SHA\", \"event\": \"COMMENT\"}" $API_URL_ROOT | jq '.id')
+      
+            # Extract data for each PERMISSIVE license match and post a comment
+            jq -c '.snippetMatches.PERMISSIVE[]' $jsonfile | while read -r match; do
+              FILE_PATH=$(echo $match | jq -r '.matchedFilePath')
+              START_LINE=$(echo $match | jq -r '.regions.sourceStartLines[0]')
+              END_LINE=$(echo $match | jq -r '.regions.sourceEndLines[0]')
+              LICENSE_NAME=$(echo $match | jq -r '.licenseDefinition.name')
+              COMMENT_BODY="Detected $LICENSE_NAME license in this snippet. Please review if this is correct."
+      
+              # For each match, create a comment in the review
+              curl -s -X POST -H "Authorization: token $GITHUB_TOKEN" -H "Accept: application/vnd.github.v3+json" \
+                   -d "{\"body\": \"$COMMENT_BODY\", \"path\": \"$FILE_PATH\", \"position\": $START_LINE, \"side\": \"RIGHT\"}" \
+                   "${API_URL_ROOT}/$REVIEW_ID/comments"
             done
+      
+            # Submit the review to publish all comments at once
+            curl -s -X POST -H "Authorization: token $GITHUB_TOKEN" -H "Accept: application/vnd.github.v3+json" \
+                 -d "{\"event\": \"COMMENT\"}" "${API_URL_ROOT}/$REVIEW_ID/events"
           done
+
       
