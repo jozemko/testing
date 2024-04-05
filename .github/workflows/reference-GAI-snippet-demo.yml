@@ -66,24 +66,25 @@ jobs:
             fs.readdirSync(folderPath).forEach(file => {
               let rawdata = fs.readFileSync(path.join(folderPath, file));
               let analysisResult = JSON.parse(rawdata);
-              commentBody += `### File: ${file.replace(/_/g, '/').replace(/-snippet-analysis.json$/, '')}\n`;
+              const filePath = file.replace(/_/g, '/').replace(/-snippet-analysis.json$/, '');
+              commentBody += `### File: ${filePath}\n`;
               if (analysisResult.snippetMatches && Object.keys(analysisResult.snippetMatches).length > 0) {
                 Object.keys(analysisResult.snippetMatches).forEach(licenseType => {
                   commentBody += `- **License Type: ${licenseType}**\n`;
                   analysisResult.snippetMatches[licenseType].forEach(match => {
-                    // Including project name and release version in the comment
                     const projectName = match.projectName ? match.projectName : "N/A";
                     const releaseVersion = match.releaseVersion ? match.releaseVersion : "N/A";
-                    // Making license name as prevalent as license type
                     const licenseName = match.licenseDefinition && match.licenseDefinition.licenseDisplayName ? match.licenseDefinition.licenseDisplayName : "Unknown License";
-                    commentBody += `  - **License Name: ${licenseName}**\n    - Path: ${match.matchedFilePath}, Lines: ${match.regions.sourceStartLines[0]}-${match.regions.sourceEndLines[0]}, Project: ${projectName}, Version: ${releaseVersion}\n`;
+                    const lines = `L${match.regions.sourceStartLines[0]}-L${match.regions.sourceEndLines[0]}`;
+                    const fileUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/blob/${context.sha}/${filePath}#${lines}`;
+                    commentBody += `  - **License Name: ${licenseName}**\n    - Path: [${filePath}#${lines}](${fileUrl}), Project: ${projectName}, Version: ${releaseVersion}\n`;
                   });
                 });
               } else {
                 commentBody += 'No significant matches found.\n';
               }
               commentBody += '\n';
-            });
+            });;
       
             const issue_number = context.issue.number;
             const owner = context.repo.owner;
