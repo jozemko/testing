@@ -10,7 +10,7 @@ jobs:
     steps:
       - name: Fetch Bearer Token 
         run: |
-          RESPONSE=$(curl -k -X POST -H "Authorization: token ${{ secrets.BLACK_DUCK_API_TOKEN }}" "https://${{ vars.HOSTNAME }}/api/tokens/authenticate")
+          RESPONSE=$(curl -k -X POST -H "Authorization: token ${{ secrets.BLACK_DUCK_API_TOKEN }}" "https://${{ env.HOSTNAME }}/api/tokens/authenticate")
           BEARER_TOKEN=$(echo "${RESPONSE}" | jq -r '.bearerToken')
           echo "BEARER_TOKEN=${BEARER_TOKEN}" >> $GITHUB_ENV  
       
@@ -38,9 +38,9 @@ jobs:
           count=1                          
           for filepath in $FILEPATHS; do       
             filename=$(echo "$filepath" | tr '/' '_')
-            filename="${filename%.*}-snippet-analysys.json"
-            echo "File path $filepath , file name $filename"
-            RES=$(curl -k --location --request POST "https://${{ vars.HOSTNAME }}/api/snippet-matching" --header "Authorization: Bearer ${BEARER_TOKEN}" --header "Content-Type: text/plain" --data-binary "@$filepath")
+            filename="${filename%.*}-snippet-analysis.json"
+            echo "File path: $filepath, File name: $filename"
+            RES=$(curl -k --location --request POST "https://${{ env.HOSTNAME }}/api/snippet-matching" --header "Authorization: Bearer ${BEARER_TOKEN}" --header "Content-Type: text/plain" --data-binary "@$filepath")
             echo "$RES" | jq '.' > ".snippet-licenses/$filename"
             if [ $count -eq 10 ]
             then
@@ -48,11 +48,50 @@ jobs:
             fi
             ((count++))
           done
-       
+          
+      - name: Generate PR comment with findings
+        id: comment
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            const folderPath = '.snippet-licenses';
+            
+            let commentBody = '## Snippet License Analysis Results\n\n';
+            fs.readdirSync(folderPath).forEach(file => {
+              let rawdata = fs.readFileSync(path.join(folderPath, file));
+              let analysisResult = JSON.parse(rawdata);
+              commentBody += `### File: ${file.replace(/_/g, '/').replace(/-snippet-analysis.json$/, '')}\n`;
+              if (analysisResult.snippetMatches && Object.keys(analysisResult.snippetMatches).length > 0) {
+                Object.keys(analysisResult.snippetMatches).forEach(licenseType => {
+                  commentBody += `- **${licenseType}**\n`;
+                  analysisResult.snippetMatches[licenseType].forEach(match => {
+                    commentBody += `  - Path: ${match.matchedFilePath}, Lines: ${match.regions.sourceStartLines[0]}-${match.regions.sourceEndLines[0]}\n`;
+                  });
+                });
+              } else {
+                commentBody += 'No significant matches found.\n';
+              }
+              commentBody += '\n';
+            });
+
+            const issue_number = context.issue.number;
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            
+            const comment = await github.rest.issues.createComment({
+              owner,
+              repo,
+              issue_number,
+              body: commentBody
+            });
+      
       - name: Commit and push snippet analysis results
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add .
           git diff --staged --quiet || git commit -m "Adding license findings via GitHub Actions"
-          git push || echo "No Changes to commit"
+          git push || echo "No changes to commit"
