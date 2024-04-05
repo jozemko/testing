@@ -54,62 +54,55 @@ jobs:
           
       - name: Generate SARIF Report
         run: |
-          # Create a SARIF template
-          SARIF_TEMPLATE='{
+          # Initialize the SARIF template
+          echo '{
             "$schema": "http://json.schemastore.org/sarif-2.1.0",
             "version": "2.1.0",
             "runs": [
               {
                 "tool": {
                   "driver": {
-                    "name": "Snippet License Analyzer",
+                    "name": "Custom License Analyzer",
                     "version": "1.0",
-                    "informationUri": "https://example.com/tool-info",
-                    "rules": []
+                    "informationUri": "https://example.com"
                   }
                 },
                 "results": []
               }
             ]
-          }'
+          }' > sarif_template.json
       
-          # Function to generate a SARIF result entry for each snippet match
-          generate_sarif_result() {
-            jq -c --arg filepath "$1" --argjson regions "$2" --arg licenseDisplayName "$3" '.runs[0].results += [{
-              "ruleId": "license-match",
-              "level": "warning",
-              "message": {
-                "text": "License match found: \($licenseDisplayName)"
-              },
-              "locations": [
-                {
-                  "physicalLocation": {
-                    "artifactLocation": {
-                      "uri": $filepath,
-                      "uriBaseId": "%SRCROOT%"
-                    },
-                    "region": $regions
-                  }
+          # Process each analysis result and append to the SARIF results
+          for file in .snippet-licenses/*; do
+            jq --arg file "$file" --slurpfile resultsArray "$file" '
+              .runs[0].results += [
+                $resultsArray[].snippetMatches[] | .[] | {
+                  ruleId: .licenseDefinition.spdxId,
+                  level: "warning",
+                  message: {
+                    text: ("License match found: " + .licenseDefinition.licenseDisplayName)
+                  },
+                  locations: [
+                    {
+                      physicalLocation: {
+                        artifactLocation: {
+                          uri: $file,
+                          uriBaseId: "%SRCROOT%"
+                        },
+                        region: {
+                          startLine: .regions.sourceStartLines[0],
+                          endLine: .regions.sourceEndLines[0]
+                        }
+                      }
+                    }
+                  ]
                 }
               ]
-            }]'
-          }
-      
-          # Initialize SARIF with the template
-          SARIF_CONTENT=$(echo "$SARIF_TEMPLATE")
-      
-          # Loop through each JSON file in the .snippet-licenses directory
-          for FILE in .snippet-licenses/*.json; do
-            # Extract necessary data and update SARIF_CONTENT for each file
-            SARIF_CONTENT=$(jq -s --argfile file "$FILE" --arg filepath "$FILE" \
-              'reduce ($file[] | .snippetMatches[][]) as $item (
-                .;
-                generate_sarif_result($filepath, {startLine: $item.regions.sourceStartLines[0], endLine: $item.regions.sourceEndLines[0]}, $item.licenseDefinition.licenseDisplayName)
-              )' <<<"$SARIF_CONTENT")
+            ' sarif_template.json > temp.json && mv temp.json sarif_template.json
           done
       
-          # Output the final SARIF content to a file
-          echo "$SARIF_CONTENT" > snippet-analysis.sarif
+          # Rename the final SARIF file
+          mv sarif_template.json snippet-analysis.sarif
  
       - name: Generate PR comment with findings
         id: comment
