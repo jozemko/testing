@@ -10,7 +10,7 @@ jobs:
     steps:
       - name: Fetch Bearer Token 
         run: |
-          RESPONSE=$(curl -k -X POST -H "Authorization: token ${{ secrets.BLACK_DUCK_API_TOKEN }}" "https://${{ env.HOSTNAME }}/api/tokens/authenticate")
+          RESPONSE=$(curl -k -X POST -H "Authorization: token ${{ secrets.BLACK_DUCK_API_TOKEN }}" "https://${{ vars.HOSTNAME }}/api/tokens/authenticate")
           BEARER_TOKEN=$(echo "${RESPONSE}" | jq -r '.bearerToken')
           echo "BEARER_TOKEN=${BEARER_TOKEN}" >> $GITHUB_ENV  
       
@@ -40,7 +40,7 @@ jobs:
             filename=$(echo "$filepath" | tr '/' '_')
             filename="${filename%.*}-snippet-analysis.json"
             echo "File path: $filepath, File name: $filename"
-            RES=$(curl -k --location --request POST "https://${{ env.HOSTNAME }}/api/snippet-matching" --header "Authorization: Bearer ${BEARER_TOKEN}" --header "Content-Type: text/plain" --data-binary "@$filepath")
+            RES=$(curl -k --location --request POST "https://${{ vars.HOSTNAME }}/api/snippet-matching" --header "Authorization: Bearer ${BEARER_TOKEN}" --header "Content-Type: text/plain" --data-binary "@$filepath")
             echo "$RES" | jq '.' > ".snippet-licenses/$filename"
             if [ $count -eq 10 ]
             then
