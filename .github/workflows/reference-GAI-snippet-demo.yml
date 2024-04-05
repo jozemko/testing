@@ -74,7 +74,7 @@ jobs:
                     // Including project name and release version in the comment
                     const projectName = match.projectName ? match.projectName : "N/A";
                     const releaseVersion = match.releaseVersion ? match.releaseVersion : "N/A";
-                    commentBody += ` Project: ${projectName}, Version: ${releaseVersion}  - Path: ${match.matchedFilePath}, Lines: ${match.regions.sourceStartLines[0]}-${match.regions.sourceEndLines[0]}\n`;
+                    commentBody += ` **Project: ${projectName}, Version: ${releaseVersion}**  - Path: ${match.matchedFilePath}, Lines: ${match.regions.sourceStartLines[0]}-${match.regions.sourceEndLines[0]}\n`;
                   });
                 });
               } else {
