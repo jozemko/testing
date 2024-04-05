@@ -111,15 +111,16 @@ jobs:
           github-token: ${{secrets.WORKFLOW_GIT_ACCESS_TOKEN}}
           script: |
             const fs = require('fs');
-            const path = require('path');
-            const folderPath = '.snippet-licenses';
-            
-            let commentBody = '## Snippet License Analysis Results\n\n';
-            fs.readdirSync(folderPath).forEach(file => {
-              let rawdata = fs.readFileSync(path.join(folderPath, file));
-              let analysisResult = JSON.parse(rawdata);
-              const filePath = file.replace(/_/g, '/').replace(/-snippet-analysis.json$/, '');
-              commentBody += `### File: ${filePath}\n`;
+              const folderPath = '.snippet-licenses';
+              
+              let commentBody = '## Snippet License Analysis Results\n\n';
+              fs.readdirSync(folderPath).forEach(file => {
+                const analysisResult = JSON.parse(fs.readFileSync(`${folderPath}/${file}`, 'utf8'));
+                // Assuming 'file' includes the full filename with extension from your analysis results
+                const filePath = file.replace(/_/g, '/').replace('-snippet-analysis.json', '');
+        
+                commentBody += `### File: [${filePath}](https://github.com/${context.repo.owner}/${context.repo.repo}/blob/${context.sha}/${filePath})\n`;
+               
               if (analysisResult.snippetMatches && Object.keys(analysisResult.snippetMatches).length > 0) {
                 Object.keys(analysisResult.snippetMatches).forEach(licenseType => {
                   commentBody += `- **License Type: ${licenseType}**\n`;
