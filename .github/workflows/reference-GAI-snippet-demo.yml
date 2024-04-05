@@ -71,7 +71,10 @@ jobs:
                 Object.keys(analysisResult.snippetMatches).forEach(licenseType => {
                   commentBody += `- **${licenseType}**\n`;
                   analysisResult.snippetMatches[licenseType].forEach(match => {
-                    commentBody += `  - Path: ${match.matchedFilePath}, Lines: ${match.regions.sourceStartLines[0]}-${match.regions.sourceEndLines[0]}\n`;
+                    // Including project name and release version in the comment
+                    const projectName = match.projectName ? match.projectName : "N/A";
+                    const releaseVersion = match.releaseVersion ? match.releaseVersion : "N/A";
+                    commentBody += `  - Path: ${match.matchedFilePath}, Lines: ${match.regions.sourceStartLines[0]}-${match.regions.sourceEndLines[0]}, Project: ${projectName}, Version: ${releaseVersion}\n`;
                   });
                 });
               } else {
@@ -79,7 +82,7 @@ jobs:
               }
               commentBody += '\n';
             });
-
+      
             const issue_number = context.issue.number;
             const owner = context.repo.owner;
             const repo = context.repo.repo;
@@ -90,6 +93,7 @@ jobs:
               issue_number,
               body: commentBody
             });
+
       
       - name: Commit and push snippet analysis results
         run: |
