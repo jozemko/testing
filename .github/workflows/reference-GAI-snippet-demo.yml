@@ -129,7 +129,7 @@ jobs:
                     const licenseName = match.licenseDefinition && match.licenseDefinition.licenseDisplayName ? match.licenseDefinition.licenseDisplayName : "Unknown License";
                     const lines = `L${match.regions.sourceStartLines[0]}-L${match.regions.sourceEndLines[0]}`;
                     const fileUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/blob/${context.sha}/${filePath}#${lines}`;
-                    commentBody += `- **Project: ${projectName}, Version: ${releaseVersion}**\n`;
+                    commentBody += `**Project: ${projectName}, Version: ${releaseVersion}**\n`;
                     commentBody += ` - License Type: ${licenseType}\n - License Name: ${licenseName}\n    - Path: [${filePath}#${lines}](${fileUrl})\n`;
                   });
                 });
