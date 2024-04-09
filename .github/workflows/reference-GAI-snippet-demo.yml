@@ -123,14 +123,14 @@ jobs:
                
               if (analysisResult.snippetMatches && Object.keys(analysisResult.snippetMatches).length > 0) {
                 Object.keys(analysisResult.snippetMatches).forEach(licenseType => {
-                  commentBody += `- **License Type: ${licenseType}**\n`;
+                  commentBody += `- **Project: ${projectName}, Version: ${releaseVersion}**\n`;
                   analysisResult.snippetMatches[licenseType].forEach(match => {
                     const projectName = match.projectName ? match.projectName : "N/A";
                     const releaseVersion = match.releaseVersion ? match.releaseVersion : "N/A";
                     const licenseName = match.licenseDefinition && match.licenseDefinition.licenseDisplayName ? match.licenseDefinition.licenseDisplayName : "Unknown License";
                     const lines = `L${match.regions.sourceStartLines[0]}-L${match.regions.sourceEndLines[0]}`;
                     const fileUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/blob/${context.sha}/${filePath}#${lines}`;
-                    commentBody += ` - **Project: ${projectName}, Version: ${releaseVersion}**\n - License Name: ${licenseName}\n    - Path: [${filePath}#${lines}](${fileUrl})\n`;
+                    commentBody += ` - License Type: ${licenseType}\n - License Name: ${licenseName}\n    - Path: [${filePath}#${lines}](${fileUrl})\n`;
                   });
                 });
               } else {
