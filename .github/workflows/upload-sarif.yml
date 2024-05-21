@@ -3,9 +3,8 @@ name: "Upload SARIF"
 # Run workflow each time code is pushed to your repository and on a schedule.
 # The scheduled workflow runs every Thursday at 15:45 UTC.
 on:
-  push:
-  schedule:
-    - cron: '45 15 * * 4'
+  issue_comment:
+    types: [created]
 
 jobs:
   build:
