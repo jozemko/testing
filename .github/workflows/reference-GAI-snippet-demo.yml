@@ -77,7 +77,7 @@ jobs:
             jq --arg file "$file" --slurpfile resultsArray "$file" '
               .runs[0].results += [
                 $resultsArray[].snippetMatches[] | .[] | {
-                  ruleId: "License",
+                  ruleId: .licenseDefinition.spdxId,
                   level: "warning",
                   message: {
                     text: ("License match found: " + .licenseDefinition.licenseDisplayName)
