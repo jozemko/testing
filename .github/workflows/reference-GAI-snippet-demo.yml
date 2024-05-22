@@ -110,38 +110,34 @@ jobs:
           github-token: ${{secrets.WORKFLOW_GIT_ACCESS_TOKEN}}
           script: |
             const fs = require('fs');
-              const folderPath = '.snippet-licenses';
-              
-              let commentBody = '## Snippet License Analysis Results\n\n';
-              fs.readdirSync(folderPath).forEach(file => {
-                const analysisResult = JSON.parse(fs.readFileSync(`${folderPath}/${file}`, 'utf8'));
-                // Assuming 'file' includes the full filename with extension from your analysis results
-                const filePath = file.replace(/_/g, '/').replace('-snippet-analysis.json', '');
-        
-                commentBody += `### File: [${filePath}](https://github.com/${context.repo.owner}/${context.repo.repo}/blob/${context.sha}/${filePath})\n`;
-               
+            const folderPath = '.snippet-licenses';
+            
+            let commentBody = '## Snippet License Analysis Results\n\n';
+            fs.readdirSync(folderPath).forEach(file => {
+              const analysisResult = JSON.parse(fs.readFileSync(`${folderPath}/${file}`, 'utf8'));
+              const filePath = file.replace(/_/g, '/').replace('-snippet-analysis.json', '');
+      
+              commentBody += `### File: [${filePath}](https://github.com/${context.repo.owner}/${context.repo.repo}/blob/${context.sha}/${filePath})\n`;
+             
               if (analysisResult.snippetMatches && Object.keys(analysisResult.snippetMatches).length > 0) {
                 Object.keys(analysisResult.snippetMatches).forEach(licenseType => {
                   analysisResult.snippetMatches[licenseType].forEach(match => {
                     const projectName = match.projectName ? match.projectName : "N/A";
-                    const releaseVersion = match.releaseVersion ? match.releaseVersion : "N/A";
                     const licenseName = match.licenseDefinition && match.licenseDefinition.licenseDisplayName ? match.licenseDefinition.licenseDisplayName : "Unknown License";
                     const lines = `L${match.regions.sourceStartLines[0]}-L${match.regions.sourceEndLines[0]}`;
                     const fileUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/blob/${context.sha}/${filePath}#${lines}`;
-                    commentBody += `**Project: ${projectName}, Version: ${releaseVersion}**\n`;
+                    commentBody += `**Project: ${projectName}**\n`;
                     commentBody += ` - License Name: ${licenseName}\n`;
                     commentBody += ` - License Type: ${licenseType}\n`;
                     commentBody += `   - Path: [${filePath}#${lines}](${fileUrl})\n`;
-                   # commentBody += `**Project: ${projectName}, Version: ${releaseVersion}**\n`;
-                   # commentBody += ` - License Type: ${licenseType}\n - License Name: ${licenseName}\n    - Path: [${filePath}#${lines}](${fileUrl})\n`;
                   });
                 });
               } else {
                 commentBody += 'No significant matches found.\n';
               }
               commentBody += '\n';
-            });;
-      
+            });
+    
             const issue_number = context.issue.number;
             const owner = context.repo.owner;
             const repo = context.repo.repo;
