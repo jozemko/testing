@@ -40,8 +40,7 @@ jobs:
           
           count=1                          
           for filepath in $FILEPATHS; do       
-            filename=$(echo "$filepath" | tr '/' '_')
-            filename="${filename%.*}-snippet-analysis.json"
+            filename=$(echo "$filepath" | tr '/' '_')-snippet-analysis.json
             echo "File path: $filepath, File name: $filename"
             RES=$(curl -k --location --request POST "https://${{ vars.HOSTNAME }}/api/snippet-matching" --header "Authorization: Bearer ${BEARER_TOKEN}" --header "Content-Type: text/plain" --data-binary "@$filepath")
             echo "$RES" | jq '.' > ".snippet-licenses/$filename"
