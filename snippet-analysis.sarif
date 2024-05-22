@@ -12,63 +12,168 @@
       },
       "results": [
         {
-          "ruleId": "License",
+          "ruleId": null,
           "level": "warning",
           "message": {
-            "text": "License match found: Apache License 2.0"
+            "text": "License match found: (GNU General Public License v2.0 or later AND MIT License AND GNU Library General Public License v2 or later)"
           },
           "locations": [
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": ".snippet-licenses/src_main_java_ReactorBDIODocument-snippet-analysis.json",
+                  "uri": ".snippet-licenses/src_main_c_analyze-blame-snippet-analysis.json",
                   "uriBaseId": "%SRCROOT%"
                 },
                 "region": {
                   "startLine": 1,
-                  "endLine": 57
+                  "endLine": 64
                 }
               }
             }
           ]
         },
         {
-          "ruleId": "License",
+          "ruleId": null,
           "level": "warning",
           "message": {
-            "text": "License match found: Apache License 2.0"
+            "text": "License match found: (GNU General Public License v2.0 or later AND MIT License AND GNU Lesser General Public License v2.1 or later)"
           },
           "locations": [
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": ".snippet-licenses/src_main_java_ReactorBDIODocument-snippet-analysis.json",
+                  "uri": ".snippet-licenses/src_main_c_analyze-blame-snippet-analysis.json",
                   "uriBaseId": "%SRCROOT%"
                 },
                 "region": {
                   "startLine": 1,
-                  "endLine": 57
+                  "endLine": 64
                 }
               }
             }
           ]
         },
         {
-          "ruleId": "License",
+          "ruleId": "GPL-2.0-only",
           "level": "warning",
           "message": {
-            "text": "License match found: Apache License 2.0"
+            "text": "License match found: GNU General Public License v2.0 only"
           },
           "locations": [
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": ".snippet-licenses/src_main_java_ReactorBDIODocument-snippet-analysis.json",
+                  "uri": ".snippet-licenses/src_main_c_analyze-blame-snippet-analysis.json",
                   "uriBaseId": "%SRCROOT%"
                 },
                 "region": {
                   "startLine": 1,
-                  "endLine": 57
+                  "endLine": 56
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": null,
+          "level": "warning",
+          "message": {
+            "text": "License match found: (GNU General Public License v2.0 or later AND MIT License AND GNU Library General Public License v2 or later)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".snippet-licenses/src_main_c_analyze-blame-snippet-analysis.json",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 1,
+                  "endLine": 64
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "LGPL-2.0-or-later",
+          "level": "warning",
+          "message": {
+            "text": "License match found: GNU Library General Public License v2 or later"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".snippet-licenses/src_main_c_analyze-blame-snippet-analysis.json",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 1,
+                  "endLine": 64
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "LGPL-2.1-or-later",
+          "level": "warning",
+          "message": {
+            "text": "License match found: GNU Lesser General Public License v2.1 or later"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".snippet-licenses/src_main_c_analyze-blame-snippet-analysis.json",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 1,
+                  "endLine": 64
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "LGPL-2.1-or-later",
+          "level": "warning",
+          "message": {
+            "text": "License match found: GNU Lesser General Public License v2.1 or later"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".snippet-licenses/src_main_c_analyze-blame-snippet-analysis.json",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 1,
+                  "endLine": 56
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "LGPL-2.1-or-later",
+          "level": "warning",
+          "message": {
+            "text": "License match found: GNU Lesser General Public License v2.1 or later"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".snippet-licenses/src_main_c_analyze-blame-snippet-analysis.json",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 1,
+                  "endLine": 64
                 }
               }
             }
