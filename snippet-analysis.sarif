@@ -12,7 +12,7 @@
       },
       "results": [
         {
-          "ruleId": null,
+          "ruleId": "unknown",
           "level": "warning",
           "message": {
             "text": "License match found: (GNU General Public License v2.0 or later AND MIT License AND GNU Library General Public License v2 or later)"
@@ -26,14 +26,14 @@
                 },
                 "region": {
                   "startLine": 1,
-                  "endLine": 64
+                  "endLine": 65
                 }
               }
             }
           ]
         },
         {
-          "ruleId": null,
+          "ruleId": "unknown",
           "level": "warning",
           "message": {
             "text": "License match found: (GNU General Public License v2.0 or later AND MIT License AND GNU Lesser General Public License v2.1 or later)"
@@ -47,7 +47,7 @@
                 },
                 "region": {
                   "startLine": 1,
-                  "endLine": 64
+                  "endLine": 65
                 }
               }
             }
@@ -75,7 +75,7 @@
           ]
         },
         {
-          "ruleId": null,
+          "ruleId": "unknown",
           "level": "warning",
           "message": {
             "text": "License match found: (GNU General Public License v2.0 or later AND MIT License AND GNU Library General Public License v2 or later)"
@@ -89,7 +89,7 @@
                 },
                 "region": {
                   "startLine": 1,
-                  "endLine": 64
+                  "endLine": 65
                 }
               }
             }
@@ -110,7 +110,7 @@
                 },
                 "region": {
                   "startLine": 1,
-                  "endLine": 64
+                  "endLine": 65
                 }
               }
             }
@@ -131,7 +131,7 @@
                 },
                 "region": {
                   "startLine": 1,
-                  "endLine": 64
+                  "endLine": 65
                 }
               }
             }
@@ -173,7 +173,7 @@
                 },
                 "region": {
                   "startLine": 1,
-                  "endLine": 64
+                  "endLine": 65
                 }
               }
             }
