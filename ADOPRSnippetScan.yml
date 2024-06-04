@@ -1,0 +1,116 @@
+trigger: none
+
+pr:
+  branches:
+    include:
+      - '*'
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  HOSTNAME: $(HOSTNAME)
+  BLACK_DUCK_API_TOKEN: $(BLACK_DUCK_API_TOKEN)
+  WORKFLOW_GIT_ACCESS_TOKEN: $(WORKFLOW_GIT_ACCESS_TOKEN)
+
+steps:
+  - script: |
+      RESPONSE=$(curl -k -X POST -H "Authorization: token $(BLACK_DUCK_API_TOKEN)" "https://$(HOSTNAME)/api/tokens/authenticate")
+      BEARER_TOKEN=$(echo "${RESPONSE}" | jq -r '.bearerToken')
+      echo "##vso[task.setvariable variable=BEARER_TOKEN]$BEARER_TOKEN"
+    displayName: 'Fetch Bearer Token'
+
+  - checkout: self
+    persistCredentials: true
+    clean: true
+
+  - script: |
+      URL="https://api.github.com/repos/$(Build.Repository.Name)/pulls/$(System.PullRequest.PullRequestId)/files"
+      echo "Requesting URL: $URL"
+      RESPONSE=$(curl -s -X GET -G -H "Authorization: token $(WORKFLOW_GIT_ACCESS_TOKEN)" $URL)
+      echo "API Response: $RESPONSE"
+      FILES=$(echo "$RESPONSE" | jq -r '.[] | .filename' | tr '\n' ' ')
+      echo "##vso[task.setvariable variable=FILES]$FILES"
+    displayName: 'Get list of changed files'
+
+  - script: |
+      rm -rf .snippet-licenses
+      mkdir .snippet-licenses
+      FILEPATHS=$(FILES)
+      
+      count=1                          
+      for filepath in $FILEPATHS; do       
+        filename=$(echo "$filepath" | tr '/' '_')-snippet-analysis.json
+        echo "File path: $filepath, File name: $filename"
+        RES=$(curl -k --location --request POST "https://$(HOSTNAME)/api/snippet-matching" --header "Authorization: Bearer $(BEARER_TOKEN)" --header "Content-Type: text/plain" --data-binary "@$filepath")
+        echo "$RES" | jq '.' > ".snippet-licenses/$filename"
+        if [ $count -eq 10 ]
+        then
+          break
+        fi
+        ((count++))
+      done
+    displayName: 'Query for snippet matches'
+
+  - script: |
+      echo '{
+        "$schema": "http://json.schemastore.org/sarif-2.1.0",
+        "version": "2.1.0",
+        "runs": [
+          {
+            "tool": {
+              "driver": {
+                "name": "Custom License Analyzer",
+                "version": "1.0",
+                "informationUri": "https://example.com"
+              }
+            },
+            "results": []
+          }
+        ]
+      }' > sarif_template.json
+      
+      for file in .snippet-licenses/*; do
+        jq --arg file "$file" --slurpfile resultsArray "$file" '
+          .runs[0].results += [
+            $resultsArray[].snippetMatches[] | .[] | {
+              ruleId: (.licenseDefinition.spdxId // "unknown"),
+              level: "warning",
+              message: {
+                text: ("License match found: " + .licenseDefinition.licenseDisplayName)
+              },
+              locations: [
+                {
+                  physicalLocation: {
+                    artifactLocation: {
+                      uri: $file,
+                      uriBaseId: "%SRCROOT%"
+                    },
+                    region: {
+                      startLine: .regions.sourceStartLines[0],
+                      endLine: .regions.sourceEndLines[0]
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        ' sarif_template.json > temp.json && mv temp.json sarif_template.json
+      done
+      
+      mv sarif_template.json snippet-analysis.sarif
+    displayName: 'Generate SARIF Report'
+
+  - task: PublishCodeAnalysisResults@1
+    inputs:
+      tool: 'Sarif'
+      sarifFiles: '**/snippet-analysis.sarif'
+    displayName: 'Publish SARIF Report'
+
+  - script: |
+      git config --local user.email "ado@pipeline.com"
+      git config --local user.name "Azure DevOps Pipeline"
+      git add .
+      git diff --staged --quiet || git commit -m "Adding license findings via Azure DevOps"
+      git push || echo "No changes to commit"
+    displayName: 'Commit and push snippet analysis results'
